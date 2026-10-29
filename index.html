@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KOPUWKA foto – Galeria Taboru</title>
+    <title>kopuwka foto – Galeria Taboru</title>
     
     <!-- Styl mapy Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -32,12 +32,13 @@
             margin: 5px 0 10px 0;
         }
         
-        /* Menu górne w stylu zetkolfoto */
+        /* Menu górne */
         nav {
             display: flex;
             justify-content: center;
             background-color: #1f1f1f;
             border-bottom: 1px solid #333;
+            flex-wrap: wrap;
         }
         nav button, nav a {
             background: none;
@@ -73,6 +74,16 @@
         }
         .section.active {
             display: block;
+        }
+
+        /* Nagłówki sekcji Home */
+        .home-section-title {
+            font-size: 1.5rem;
+            color: #ffc107;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            margin-top: 30px;
+            margin-bottom: 20px;
         }
 
         /* Okruszki (Breadcrumbs) powrotu */
@@ -185,16 +196,29 @@
         <p>Kolej w obiektywie</p>
     </header>
 
-    <!-- Górne menu nawigacyjne -->
+    <!-- Górne menu nawigacyjne z zakładką Home -->
     <nav>
-        <button onclick="switchMainTab('photos')" id="nav-photos" class="active">Zdjęcia</button>
+        <button onclick="switchMainTab('home')" id="nav-home" class="active">Home</button>
+        <button onclick="switchMainTab('photos')" id="nav-photos">Zdjęcia</button>
         <button onclick="switchMainTab('map')" id="nav-map">Mapa</button>
         <a href="/admin/" class="admin-btn">Panel Admina</a>
     </nav>
 
+    <!-- ZAKŁADKA: HOME (Najnowsze i najlepsze zdjęcia) -->
+    <div id="tab-home" class="section active">
+        <h2 class="home-section-title">✨ Wyróżnione / Najlepsze zdjęcia</h2>
+        <div id="home-featured-grid" class="gallery-grid">
+            <div class="loading">Ładowanie wyróżnionych zdjęć...</div>
+        </div>
+
+        <h2 class="home-section-title">🚂 Ostatnio dodane w trasy</h2>
+        <div id="home-latest-grid" class="gallery-grid">
+            <div class="loading">Ładowanie ostatnich zdjęć...</div>
+        </div>
+    </div>
+
     <!-- ZAKŁADKA: ZDJĘCIA (Kategorie -> Serie -> Zdjęcia) -->
-    <div id="tab-photos" class="section active">
-        <!-- Krok 1: Wybór kategorii głównej -->
+    <div id="tab-photos" class="section">
         <div id="view-categories">
             <h2>Wybierz kategorię taboru:</h2>
             <div class="menu-grid">
@@ -204,7 +228,6 @@
             </div>
         </div>
 
-        <!-- Krok 2: Wybór serii w danej kategorii -->
         <div id="view-series" style="display: none;">
             <div class="breadcrumb">
                 <button onclick="resetToCategories()">← Wróć do kategorii</button> / <span id="current-cat-name" style="color: #fff; font-weight: bold;"></span>
@@ -213,7 +236,6 @@
             <div id="series-grid" class="menu-grid"></div>
         </div>
 
-        <!-- Krok 3: Wyświetlenie zdjęć wybranej serii -->
         <div id="view-gallery" style="display: none;">
             <div class="breadcrumb">
                 <button onclick="resetToSeries()">← Wróć do serii</button> / <span id="current-path" style="color: #fff; font-weight: bold;"></span>
@@ -237,7 +259,6 @@
         let currentCategory = null;
         let currentSeries = null;
 
-        // Pobieranie wpisów z GitHub API po załadowaniu strony
         async function fetchEntries() {
             const repo = "bartek3223/kopuwka-foto";
             const url = `https://api.github.com/repos/${repo}/contents/content/galeria`;
@@ -256,172 +277,65 @@
                     if (data) allEntries.push(data);
                 }
                 
+                renderHomeTab();
                 initMapMarkers();
             } catch (err) {
                 console.error("Błąd ładowania wpisów:", err);
             }
         }
 
-        // Przełączanie głównych zakładek (Zdjęcia / Mapa)
+        // Renderowanie zawartości zakładki Home
+        function renderHomeTab() {
+            const featuredGrid = document.getElementById('home-featured-grid');
+            const latestGrid = document.getElementById('home-latest-grid');
+
+            if (allEntries.length === 0) {
+                featuredGrid.innerHTML = '<div style="color: #888;">Brak wpisów w galerii.</div>';
+                latestGrid.innerHTML = '<div style="color: #888;">Brak wpisów w galerii.</div>';
+                return;
+            }
+
+            // Najlepsze / Wyróżnione (np. te, które mają pole wybrane lub po prostu pierwsze 3)
+            const featured = allEntries.filter(item => item.featured === true || item.featured === "true");
+            const displayFeatured = featured.length > 0 ? featured : allEntries.slice(0, 3);
+
+            featuredGrid.innerHTML = '';
+            displayFeatured.forEach(item => {
+                featuredGrid.appendChild(createCard(item));
+            });
+
+            // Ostatnio dodane (wszystkie lub posortowane)
+            latestGrid.innerHTML = '';
+            allEntries.slice(0, 6).forEach(item => {
+                latestGrid.appendChild(createCard(item));
+            });
+        }
+
+        function createCard(item) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                ${item.image ? `<img src="${item.image}" alt="${item.title}">` : ''}
+                <div class="card-content">
+                    ${item.kategoria ? `<span class="badge">${item.kategoria}${item.seria ? '('+item.seria+')' : ''}</span>` : ''}
+                    <h3>${item.title || 'Bez tytułu'}</h3>
+                    <p>${item.body || ''}</p>
+                </div>
+            `;
+            return card;
+        }
+
+        // Przełączanie głównych zakładek
         function switchMainTab(tab) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
 
-            if (tab === 'photos') {
+            if (tab === 'home') {
+                document.getElementById('tab-home').classList.add('active');
+                document.getElementById('nav-home').classList.add('active');
+            } else if (tab === 'photos') {
                 document.getElementById('tab-photos').classList.add('active');
                 document.getElementById('nav-photos').classList.add('active');
             } else if (tab === 'map') {
                 document.getElementById('tab-map').classList.add('active');
-                document.getElementById('nav-map').classList.add('active');
-                // Odświeżenie mapy, żeby poprawnie się wyrenderowała
-                setTimeout(() => { if (map) map.invalidateSize(); }, 150);
-            }
-        }
-
-        // KROK 1 -> KROK 2: Wybrano kategorię
-        function selectCategory(category) {
-            currentCategory = category;
-            document.getElementById('current-cat-name').innerText = category;
-            
-            document.getElementById('view-categories').style.display = 'none';
-            document.getElementById('view-series').style.display = 'block';
-
-            // Wyciągnij unikalne serie dla tej kategorii
-            const seriesSet = new Set();
-            allEntries.forEach(item => {
-                if (item.kategoria === category && item.seria) {
-                    seriesSet.add(item.seria);
-                }
-            });
-
-            const seriesGrid = document.getElementById('series-grid');
-            seriesGrid.innerHTML = '';
-
-            if (seriesSet.size === 0) {
-                seriesGrid.innerHTML = '<div style="color: #888; grid-column: 1/-1;">Brak serii w tej kategorii. Dodaj wpis w panelu admina!</div>';
-                return;
-            }
-
-            seriesSet.forEach(seria => {
-                const box = document.createElement('div');
-                box.className = 'menu-box';
-                box.innerText = seria;
-                box.onclick = () => selectSeries(seria);
-                seriesGrid.appendChild(box);
-            });
-        }
-
-        // KROK 2 -> KROK 3: Wybrano serię
-        function selectSeries(seria) {
-            currentSeries = seria;
-            document.getElementById('current-path').innerText = `${currentCategory} / ${seria}`;
-            
-            document.getElementById('view-series').style.display = 'none';
-            document.getElementById('view-gallery').style.display = 'block';
-
-            const galleryGrid = document.getElementById('gallery-grid');
-            galleryGrid.innerHTML = '';
-
-            const filtered = allEntries.filter(item => item.kategoria === currentCategory && item.seria === seria);
-
-            filtered.forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    ${item.image ? `<img src="${item.image}" alt="${item.title}">` : ''}
-                    <div class="card-content">
-                        <span class="badge">${item.kategoria} (${item.seria})</span>
-                        <h3>${item.title || 'Bez tytułu'}</h3>
-                        <p>${item.body || ''}</p>
-                    </div>
-                `;
-                galleryGrid.appendChild(card);
-            });
-        }
-
-        // Funkcje powrotu w nawigacji
-        function resetToCategories() {
-            currentCategory = null;
-            document.getElementById('view-series').style.display = 'none';
-            document.getElementById('view-categories').style.display = 'block';
-        }
-
-        function resetToSeries() {
-            currentSeries = null;
-            document.getElementById('view-gallery').style.display = 'none';
-            document.getElementById('view-series').style.display = 'block';
-        }
-
-        // Inicjalizacja dużej mapy zbiorczej
-        function initMap() {
-            map = L.map('map').setView([52.0, 19.0], 7); // Centrum Polski
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(map);
-
-            markersLayer = L.layerGroup().addTo(map);
-        }
-
-        // Dodawanie pinezek na mapę ze wszystkich wpisów
-        function initMapMarkers() {
-            if (!map) initMap();
-            markersLayer.clearLayers();
-
-            allEntries.forEach(item => {
-                if (item.lokalizacja && item.lokalizacja.lat && item.lokalizacja.lng) {
-                    const lat = Number(item.lokalizacja.lat);
-                    const lng = Number(item.lokalizacja.lng);
-
-                    const marker = L.marker([lat, lng]);
-                    
-                    let popupContent = `<div style="text-align: center; max-width: 200px;">`;
-                    if (item.image) popupContent += `<img src="${item.image}" style="width:100%; height:120px; object-fit:cover; border-radius:4px; margin-bottom:5px;">`;
-                    popupContent += `<strong>${item.title || 'Lokomotywa'}</strong><br><span style="font-size:0.85rem; color:#555;">${item.kategoria} (${item.seria || ''})</span></div>`;
-
-                    marker.bindPopup(popupContent);
-                    markersLayer.addLayer(marker);
-                }
-            });
-        }
-
-        // Parser danych YAML (Frontmatter) z plików Markdown
-        function parseFrontmatter(text) {
-            const match = text.match(/^---\s*([\s\S]*?)\s*---([\s\S]*)$/);
-            if (!match) return null;
-
-            const yamlLines = match[1].split('\n');
-            const body = match[2].trim();
-            const data = { body: body };
-            let parentKey = null;
-
-            yamlLines.forEach(line => {
-                const indentMatch = line.match(/^(\s*)/);
-                const indent = indentMatch ? indentMatch[1].length : 0;
-                const parts = line.split(':');
-                if (parts.length < 2) return;
-
-                const key = parts[0].trim();
-                const value = parts.slice(1).join(':').trim().replace(/^['"](.*)['"]$/, '$1');
-
-                if (indent === 0) {
-                    if (value === '') {
-                        parentKey = key;
-                        data[key] = {};
-                    } else {
-                        data[key] = value;
-                        parentKey = null;
-                    }
-                } else if (indent > 0 && parentKey) {
-                    data[parentKey][key] = isNaN(value) ? value : Number(value);
-                }
-            });
-
-            return data;
-        }
-
-        // Start pobierania danych po załadowaniu strony
-        fetchEntries();
-    </script>
-</body>
-</html>
+                document.getElementById
