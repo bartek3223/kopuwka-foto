@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KOPUWKA foto – Galeria Taboru</title>
+    <title>KOPuwka foto – Galeria Taboru</title>
     
     <!-- Styl mapy Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -330,7 +330,6 @@
         let currentCategory = null;
         let currentSeries = null;
 
-        // Inicjalizator po załadowaniu DOM
         document.addEventListener('DOMContentLoaded', () => {
             setupNavigation();
             setupCategories();
@@ -338,7 +337,6 @@
             fetchEntries();
         });
 
-        // Nawigacja główna
         function setupNavigation() {
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -378,7 +376,6 @@
             }
         }
 
-        // Obsługa kategorii
         function setupCategories() {
             document.querySelectorAll('.menu-box[data-category]').forEach(box => {
                 box.addEventListener('click', () => {
@@ -409,7 +406,7 @@
 
             const seriesSet = new Set();
             allEntries.forEach(item => {
-                if (item.kategoria === category && item.seria) {
+                if (item.kategoria && item.kategoria.toLowerCase() === category.toLowerCase() && item.seria) {
                     seriesSet.add(item.seria);
                 }
             });
@@ -433,96 +430,19 @@
 
         function selectSeries(seria) {
             currentSeries = seria;
-            document.getElementById('current-path').innerText = `${currentCategory} / ${seria}`;  document.getElementById('view-series').style.display = 'none'; document.getElementById('view-gallery').style.display = 'block';  const galleryGrid = document.getElementById('gallery-grid'); galleryGrid.innerHTML = '';  const filtered = allEntries.filter(item => item.kategoria === currentCategory && item.seria === seria); filtered.forEach(item => { galleryGrid.appendChild(createCard(item)); }); }  // Pobieranie danych z GitHub API async function fetchEntries() { const repo = "bartek3223/kopuwka-foto"; const url = `https://api.github.com/repos/${repo}/contents/content/galeria`;
+            document.getElementById('current-path').innerText = `${currentCategory} / ${seria}`;
+            
+            document.getElementById('view-series').style.display = 'none';
+            document.getElementById('view-gallery').style.display = 'block';
 
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error("Błąd pobierania");
-                const files = await response.json();
-                const mdFiles = files.filter(file => file.name.endsWith('.md'));
+            const galleryGrid = document.getElementById('gallery-grid');
+            galleryGrid.innerHTML = '';
 
-                allEntries = [];
-                for (const file of mdFiles) {
-                    try {
-                        const fileResponse = await fetch(file.download_url);
-                        const text = await fileResponse.text();
-                        const data = parseFrontmatter(text);
-                        if (data) allEntries.push(data);
-                    } catch (e) {
-                        console.error("Błąd parsowania pliku:", file.name);
-                    }
-                }
-                
-                renderHomeTab();
-            } catch (err) {
-                console.error("Błąd ładowania wpisów:", err);
-                document.getElementById('home-featured-grid').innerHTML = '<div class="loading">Błąd ładowania danych z GitHuba.</div>';
-                document.getElementById('home-latest-grid').innerHTML = '<div class="loading">Błąd ładowania danych z GitHuba.</div>';
-            }
-        }
-
-        function renderHomeTab() {
-            const featuredGrid = document.getElementById('home-featured-grid');
-            const latestGrid = document.getElementById('home-latest-grid');
-
-            if (allEntries.length === 0) {
-                featuredGrid.innerHTML = '<div class="loading">Brak wpisów w galerii. Dodaj pierwszy w panelu admina!</div>';
-                latestGrid.innerHTML = '<div class="loading">Brak wpisów w galerii.</div>';
-                return;
-            }
-
-            const featured = allEntries.filter(item => item.featured === true || item.featured === "true");
-            const displayFeatured = featured.length > 0 ? featured : allEntries.slice(0, 3);
-
-            featuredGrid.innerHTML = '';
-            displayFeatured.forEach(item => {
-                featuredGrid.appendChild(createCard(item));
-            });
-
-            latestGrid.innerHTML = '';
-            allEntries.slice(0, 6).forEach(item => {
-                latestGrid.appendChild(createCard(item));
+            const filtered = allEntries.filter(item => item.kategoria && item.kategoria.toLowerCase() === currentCategory.toLowerCase() && item.seria === seria);
+            filtered.forEach(item => {
+                galleryGrid.appendChild(createCard(item));
             });
         }
 
-        function createCard(item) {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `
-                ${item.image ? `<img src="${item.image}" alt="${item.title || 'Zdjęcie'}">` : ''}
-                <div class="card-content">
-                    ${item.kategoria ? `<span class="badge">${item.kategoria} ${item.seria ? '('+item.seria+')' : ''}</span>` : ''}
-                    <h3>${item.title || 'Bez tytułu'}</h3>
-                    <p>${item.body || ''}</p>
-                </div>
-            `;
-            card.addEventListener('click', () => openModal(item));
-            return card;
-        }
-
-        // Obsługa modala i zdarzeń okna
-        function setupModalListeners() {
-            document.getElementById('modal-close-btn').addEventListener('click', closeModal);
-            document.getElementById('photo-modal').addEventListener('click', (e) => {
-                if (e.target.id === 'photo-modal') closeModal();
-            });
-        }
-
-        function openModal(item) {
-            const modal = document.getElementById('photo-modal');
-            const modalBody = document.getElementById('modal-body-content');
-
-            let mapHtml = '';
-            const hasCoords = item.lokalizacja && item.lokalizacja.lat && item.lokalizacja.lng;
-            if (hasCoords) {
-                mapHtml = `<div id="modal-map" class="modal-map"></div>`;
-            }
-
-            modalBody.innerHTML = `
-                <div class="modal-img-container">
-                    ${item.image ? `<img src="${item.image}" alt="${item.title || 'Zdjęcie'}">` : ''}
-                </div>
-                <div class="modal-info">
-                    ${item.kategoria ? `<span class="badge">${item.kategoria} ${item.seria ? '('+item.seria+')' : ''}</span>` : ''}
-                    <h2>${item.title || 'Bez tytułu'}</h2>
-                    <p style="color: #ccc; line-height: 1.5;">${item.body || 'Brak opisu
+        async function fetchEntries() {
+            const repo = "bartek322
