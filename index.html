@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KOPUWKA foto – Galeria Taboru</title>
+    <title>KopUwA foto – Galeria Taboru</title>
     
     <!-- Styl mapy Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -121,6 +121,7 @@
             font-weight: bold;
             color: #fff;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            user-select: none;
         }
         .menu-box:hover {
             background-color: #252525;
@@ -152,6 +153,7 @@
             height: 200px;
             object-fit: cover;
             border-bottom: 1px solid #333;
+            pointer-events: none;
         }
         .card-content {
             padding: 15px;
@@ -190,7 +192,7 @@
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.85);
-            z-index: 1000;
+            z-index: 9999;
             justify-content: center;
             align-items: center;
             padding: 20px;
@@ -260,9 +262,9 @@
     </header>
 
     <nav>
-        <button onclick="switchMainTab('home')" id="nav-home" class="active">Home</button>
-        <button onclick="switchMainTab('photos')" id="nav-photos">Zdjęcia</button>
-        <button onclick="switchMainTab('map')" id="nav-map">Mapa</button>
+        <button type="button" onclick="switchMainTab('home')" id="nav-home" class="active">Home</button>
+        <button type="button" onclick="switchMainTab('photos')" id="nav-photos">Zdjęcia</button>
+        <button type="button" onclick="switchMainTab('map')" id="nav-map">Mapa</button>
         <a href="/admin/" class="admin-btn">Panel Admina</a>
     </nav>
 
@@ -292,7 +294,7 @@
 
         <div id="view-series" style="display: none;">
             <div class="breadcrumb">
-                <button onclick="resetToCategories()">← Wróć do kategorii</button> / <span id="current-cat-name" style="color: #fff; font-weight: bold;"></span>
+                <button type="button" onclick="resetToCategories()">← Wróć do kategorii</button> / <span id="current-cat-name" style="color: #fff; font-weight: bold;"></span>
             </div>
             <h2>Wybierz serię lokomotywy:</h2>
             <div id="series-grid" class="menu-grid"></div>
@@ -300,7 +302,7 @@
 
         <div id="view-gallery" style="display: none;">
             <div class="breadcrumb">
-                <button onclick="resetToSeries()">← Wróć do serii</button> / <span id="current-path" style="color: #fff; font-weight: bold;"></span>
+                <button type="button" onclick="resetToSeries()">← Wróć do serii</button> / <span id="current-path" style="color: #fff; font-weight: bold;"></span>
             </div>
             <div id="gallery-grid" class="gallery-grid"></div>
         </div>
@@ -313,8 +315,8 @@
 
     <!-- OKNO MODALNE -->
     <div id="photo-modal" class="modal-overlay" onclick="closeModalOnBackground(event)">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeModal()">&times;</button>
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button type="button" class="modal-close" onclick="closeModal()">&times;</button>
             <div class="modal-body" id="modal-body-content"></div>
         </div>
     </div>
@@ -394,7 +396,9 @@
                     <p>${item.body || ''}</p>
                 </div>
             `;
-            card.onclick = () => openModal(item);
+            card.onclick = function() {
+                openModal(item);
+            };
             return card;
         }
 
@@ -410,62 +414,4 @@
 
             modalBody.innerHTML = `
                 <div class="modal-img-container">
-                    ${item.image ? `<img src="${item.image}" alt="${item.title || 'Zdjęcie'}">` : ''}
-                </div>
-                <div class="modal-info">
-                    ${item.kategoria ? `<span class="badge">${item.kategoria}${item.seria ? '('+item.seria+')' : ''}</span>` : ''}
-                    <h2>${item.title || 'Bez tytułu'}</h2>
-                    <p style="color: #ccc; line-height: 1.5;">${item.body || 'Brak opisu dla tego zdjęcia.'}</p>
-                    ${mapHtml}
-                </div>
-            `;
-
-            modal.style.display = 'flex';
-
-            if (hasCoords) {
-                setTimeout(() => {
-                    if (modalMap) {
-                        modalMap.remove();
-                        modalMap = null;
-                    }
-                    const lat = Number(item.lokalizacja.lat);
-                    const lng = Number(item.lokalizacja.lng);
-                    modalMap = L.map('modal-map').setView([lat, lng], 13);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        maxZoom: 19,
-                        attribution: '&copy; OpenStreetMap contributors'
-                    }).addTo(modalMap);
-                    L.marker([lat, lng]).addTo(modalMap);
-                }, 150);
-            }
-        }
-
-        function closeModal() {
-            document.getElementById('photo-modal').style.display = 'none';
-            if (modalMap) {
-                modalMap.remove();
-                modalMap = null;
-            }
-        }
-
-        function closeModalOnBackground(event) {
-            if (event.target.id === 'photo-modal') {
-                closeModal();
-            }
-        }
-
-        function switchMainTab(tab) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-
-            if (tab === 'home') {
-                document.getElementById('tab-home').classList.add('active');
-                document.getElementById('nav-home').classList.add('active');
-            } else if (tab === 'photos') {
-                document.getElementById('tab-photos').classList.add('active');
-                document.getElementById('nav-photos').classList.add('active');
-            } else if (tab === 'map') {
-                document.getElementById('tab-map').classList.add('active');
-                document.getElementById('nav-map').classList.add('active');
-                
-                // In
+                    ${item.image ? `<img src="${
