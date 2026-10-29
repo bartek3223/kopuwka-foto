@@ -3,6 +3,7 @@ backend:
   repo: bartek3223/kopuwka-foto
   branch: main
   auth_type: implicit
+  app_id: Iv1.b5170dcb7e0b5037
 
 media_folder: "images"
 public_folder: "/images"
