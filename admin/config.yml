@@ -1,9 +1,8 @@
 backend:
-  name: github
-  repo: bartek3223/bartek3223.github.io
+  name: git-gateway
   branch: main
 
-media_folder: "images" # Gdzie na GitHubie będą wgrywane zdjęcia
+media_folder: "images"
 public_folder: "/images"
 
 collections:
