@@ -1,0 +1,1 @@
+# kopuwka-foto
