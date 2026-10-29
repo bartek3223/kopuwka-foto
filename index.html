@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>kopuwka foto – Galeria Kolejowa</title>
+    <title>kopuwka foto – Galeria Kolejowa:)</title>
     
     <!-- Styl mapy Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -140,6 +140,12 @@
             overflow: hidden;
             border: 1px solid #333;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: scale(1.02);
+            border-color: #ffc107;
         }
         .card img {
             width: 100%;
@@ -170,12 +176,73 @@
             font-size: 0.9rem;
         }
 
+        /* Styl dużej mapy w zakładce Mapa */
         #map {
             width: 100%;
             height: 600px;
             border-radius: 8px;
             border: 1px solid #444;
         }
+
+        /* MODAL (Okno szczegółów zdjęcia) */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-content {
+            background-color: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px; right: 20px;
+            background: none; border: none;
+            color: #fff; font-size: 2rem;
+            cursor: pointer; z-index: 10;
+        }
+        .modal-close:hover { color: #ffc107; }
+        
+        .modal-body {
+            padding: 25px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .modal-body { grid-template-columns: 1fr; }
+        }
+        .modal-img-container img {
+            width: 100%;
+            border-radius: 6px;
+            object-fit: contain;
+            max-height: 450px;
+            background-color: #000;
+        }
+        .modal-info h2 { margin-top: 0; color: #fff; }
+        .modal-map {
+            width: 100%;
+            height: 220px;
+            border-radius: 6px;
+            margin-top: 15px;
+            border: 1px solid #444;
+        }
+
         .loading {
             text-align: center;
             font-size: 1.2rem;
@@ -244,11 +311,22 @@
         <div id="map"></div>
     </div>
 
+    <!-- OKNO MODALNE (Szczegóły zdjęcia po kliknięciu) -->
+    <div id="photo-modal" class="modal-overlay" onclick="closeModalOnBackground(event)">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <div class="modal-body" id="modal-body-content">
+                <!-- Wypełniane dynamicznie przez JS -->
+            </div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
         let allEntries = [];
         let map = null;
+        let modalMap = null;
         let markersLayer = null;
         let currentCategory = null;
         let currentSeries = null;
@@ -319,7 +397,65 @@
                     <p>${item.body || ''}</p>
                 </div>
             `;
+            card.onclick = () => openModal(item);
             return card;
+        }
+
+        // Obsługa otwierania modala ze szczegółami
+        function openModal(item) {
+            const modal = document.getElementById('photo-modal');
+            const modalBody = document.getElementById('modal-body-content');
+
+            let mapHtml = '';
+            const hasCoords = item.lokalizacja && item.lokalizacja.lat && item.lokalizacja.lng;
+            if (hasCoords) {
+                mapHtml = `<div id="modal-map" class="modal-map"></div>`;
+            }
+
+            modalBody.innerHTML = `
+                <div class="modal-img-container">
+                    ${item.image ? `<img src="${item.image}" alt="${item.title || 'Zdjęcie'}">` : ''}
+                </div>
+                <div class="modal-info">
+                    ${item.kategoria ? `<span class="badge">${item.kategoria} ${item.seria ? '('+item.seria+')' : ''}</span>` : ''}
+                    <h2>${item.title || 'Bez tytułu'}</h2>
+                    <p style="color: #ccc; line-height: 1.5;">${item.body || 'Brak opisu dla tego zdjęcia.'}</p>
+                    ${mapHtml}
+                </div>
+            `;
+
+            modal.style.display = 'flex';
+
+            // Inicjalizacja małej mapy w modalu
+            if (hasCoords) {
+                setTimeout(() => {
+                    if (modalMap) {
+                        modalMap.remove();
+                    }
+                    const lat = Number(item.lokalizacja.lat);
+                    const lng = Number(item.lokalizacja.lng);
+                    modalMap = L.map('modal-map').setView([lat, lng], 13);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }).addTo(modalMap);
+                    L.marker([lat, lng]).addTo(modalMap);
+                }, 100);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('photo-modal').style.display = 'none';
+            if (modalMap) {
+                modalMap.remove();
+                modalMap = null;
+            }
+        }
+
+        function closeModalOnBackground(event) {
+            if (event.target.id === 'photo-modal') {
+                closeModal();
+            }
         }
 
         function switchMainTab(tab) {
@@ -374,98 +510,4 @@
 
         function selectSeries(seria) {
             currentSeries = seria;
-            document.getElementById('current-path').innerText = `${currentCategory} / ${seria}`;
-            
-            document.getElementById('view-series').style.display = 'none';
-            document.getElementById('view-gallery').style.display = 'block';
-
-            const galleryGrid = document.getElementById('gallery-grid');
-            galleryGrid.innerHTML = '';
-
-            const filtered = allEntries.filter(item => item.kategoria === currentCategory && item.seria === seria);
-            filtered.forEach(item => {
-                galleryGrid.appendChild(createCard(item));
-            });
-        }
-
-        function resetToCategories() {
-            currentCategory = null;
-            document.getElementById('view-series').style.display = 'none';
-            document.getElementById('view-categories').style.display = 'block';
-        }
-
-        function resetToSeries() {
-            currentSeries = null;
-            document.getElementById('view-gallery').style.display = 'none';
-            document.getElementById('view-series').style.display = 'block';
-        }
-
-        function initMap() {
-            if (map) return;
-            map = L.map('map').setView([52.0, 19.0], 7);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(map);
-
-            markersLayer = L.layerGroup().addTo(map);
-        }
-
-        function initMapMarkers() {
-            initMap();
-            markersLayer.clearLayers();
-
-            allEntries.forEach(item => {
-                if (item.lokalizacja && item.lokalizacja.lat && item.lokalizacja.lng) {
-                    const lat = Number(item.lokalizacja.lat);
-                    const lng = Number(item.lokalizacja.lng);
-
-                    const marker = L.marker([lat, lng]);
-                    let popupContent = `<div style="text-align: center; max-width: 200px;">`;
-                    if (item.image) popupContent += `<img src="${item.image}" style="width:100%; height:120px; object-fit:cover; border-radius:4px; margin-bottom:5px;">`;
-                    popupContent += `<strong>${item.title || 'Lokomotywa'}</strong><br><span style="font-size:0.85rem; color:#555;">${item.kategoria} (${item.seria || ''})</span></div>`;
-
-                    marker.bindPopup(popupContent);
-                    markersLayer.addLayer(marker);
-                }
-            });
-        }
-
-        function parseFrontmatter(text) {
-            const match = text.match(/^---\s*([\s\S]*?)\s*---([\s\S]*)$/);
-            if (!match) return null;
-
-            const yamlLines = match[1].split('\n');
-            const body = match[2].trim();
-            const data = { body: body };
-            let parentKey = null;
-
-            yamlLines.forEach(line => {
-                const indentMatch = line.match(/^(\s*)/);
-                const indent = indentMatch ? indentMatch[1].length : 0;
-                const parts = line.split(':');
-                if (parts.length < 2) return;
-
-                const key = parts[0].trim();
-                const value = parts.slice(1).join(':').trim().replace(/^['"](.*)['"]$/, '$1');
-
-                if (indent === 0) {
-                    if (value === '') {
-                        parentKey = key;
-                        data[key] = {};
-                    } else {
-                        data[key] = value;
-                        parentKey = null;
-                    }
-                } else if (indent > 0 && parentKey) {
-                    data[parentKey][key] = isNaN(value) ? value : Number(value);
-                }
-            });
-
-            return data;
-        }
-
-        fetchEntries();
-    </script>
-</body>
-</html>
+            document.getElementById('current-path').innerText = `${currentCategory} /${seria
