@@ -7,20 +7,25 @@ public_folder: "/images"
 
 collections:
   - name: "galeria"
-    label: "Zdjęcia i Tabor"
-    folder: "content/galeria"
-    create: true
-    slug: "{{slug}}"
-    fields:
-      - {label: "Tytuł / Oznaczenie (np. EP07-201)", name: "title", widget: "string"}
-      - {label: "Kategoria główna", name: "kategoria", widget: "select", options: ["Elektryczne", "Spalinowe", "Parowe"]}
-      - {label: "Seria / Typ", name: "seria", widget: "string", hint: "Np. EP09, EU07, SM42"}
-      - {label: "Zdjęcie lokomotywy", name: "image", widget: "image"}
-      - {label: "Data wykonania", name: "data", widget: "date"}
-      - {label: "Opis kadru", name: "body", widget: "text"}
-      - label: "Lokalizacja na mapie"
-        name: "lokalizacja"
-        widget: "object"
+    label: "Galeria Taboru"
+    files:
+      - file: "galeria.json"
+        label: "Wpisy w galerii"
+        name: "galeria"
         fields:
-          - {label: "Szerokość geograficzna (Lat)", name: "lat", widget: "number", value_type: "float"}
-          - {label: "Długość geograficzna (Lng)", name: "lng", widget: "number", value_type: "float"}
+          - label: "Lista zdjęć"
+            name: "entries"
+            widget: "list"
+            fields:
+              - {label: "Tytuł / Lokomotywa", name: "title", widget: "string"}
+              - {label: "Kategoria", name: "kategoria", widget: "select", options: ["Elektryczne", "Spalinowe", "Parowe"]}
+              - {label: "Seria", name: "seria", widget: "string", hint: "Np. EU07, EP09, Lyd1"}
+              - {label: "Zdjęcie", name: "image", widget: "image"}
+              - {label: "Opis", name: "body", widget: "text", required: false}
+              - label: "Lokalizacja GPS"
+                name: "lokalizacja"
+                widget: "object"
+                fields:
+                  - {label: "Szerokość (lat)", name: "lat", widget: "number", value_type: "float", required: false}
+                  - {label: "Długość (lng)", name: "lng", widget: "number", value_type: "float", required: false}
+              - {label: "Wyróżnione na stronie głównej (Home)?", name: "featured", widget: "boolean", required: false, default: false}
