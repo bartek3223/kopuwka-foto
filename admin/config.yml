@@ -1,8 +1,6 @@
 backend:
-  name: github
-  repo: bartek3223/kopuwka-foto
+  name: git-gateway
   branch: main
-  base_url: https://api.github.com
 
 media_folder: "images"
 public_folder: "/images"
