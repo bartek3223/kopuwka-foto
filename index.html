@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KOPuwka foto – Galeria Taboru</title>
+    <title>KOPUWKA foto – Galeria Taboru</title>
     
     <!-- Styl mapy Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -405,7 +405,10 @@
             document.getElementById('view-series').style.display = 'block';
 
             const seriesSet = new Set();
-            allEntries.forEach(item => {
+            // Obsługa struktury z Decap CMS (która w obiekcie entries zwraca tablicę wpisów)
+            const entriesList = Array.isArray(allEntries) ? allEntries : (allEntries.entries || []);
+
+            entriesList.forEach(item => {
                 if (item.kategoria && item.kategoria.toLowerCase() === category.toLowerCase() && item.seria) {
                     seriesSet.add(item.seria);
                 }
@@ -438,11 +441,75 @@
             const galleryGrid = document.getElementById('gallery-grid');
             galleryGrid.innerHTML = '';
 
-            const filtered = allEntries.filter(item => item.kategoria && item.kategoria.toLowerCase() === currentCategory.toLowerCase() && item.seria === seria);
+            const entriesList = Array.isArray(allEntries) ? allEntries : (allEntries.entries || []);
+            const filtered = entriesList.filter(item => item.kategoria && item.kategoria.toLowerCase() === currentCategory.toLowerCase() && item.seria === seria);
+            
             filtered.forEach(item => {
                 galleryGrid.appendChild(createCard(item));
             });
         }
 
         async function fetchEntries() {
-            const repo = "bartek322
+            try {
+                const response = await fetch('galeria.json');
+                if (!response.ok) throw new Error("Błąd pobierania pliku JSON");
+                allEntries = await response.json();
+                renderHomeTab();
+            } catch (err) {
+                console.error("Błąd ładowania wpisów:", err);
+                document.getElementById('home-featured-grid').innerHTML = '<div class="loading">Brak pliku galeria.json lub błąd danych.</div>';
+                document.getElementById('home-latest-grid').innerHTML = '<div class="loading">Brak danych.</div>';
+            }
+        }
+
+        function renderHomeTab() {
+            const featuredGrid = document.getElementById('home-featured-grid');
+            const latestGrid = document.getElementById('home-latest-grid');
+
+            const entriesList = Array.isArray(allEntries) ? allEntries : (allEntries.entries || []);
+
+            if (entriesList.length === 0) {
+                featuredGrid.innerHTML = '<div class="loading">Brak wpisów w galerii.</div>';
+                latestGrid.innerHTML = '<div class="loading">Brak wpisów w galerii.</div>';
+                return;
+            }
+
+            const featured = entriesList.filter(item => item.featured === true || item.featured === "true");
+            const displayFeatured = featured.length > 0 ? featured : entriesList.slice(0, 3);
+
+            featuredGrid.innerHTML = '';
+            displayFeatured.forEach(item => {
+                featuredGrid.appendChild(createCard(item));
+            });
+
+            latestGrid.innerHTML = '';
+            entriesList.slice(0, 6).forEach(item => {
+                latestGrid.appendChild(createCard(item));
+            });
+        }
+
+        function createCard(item) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                ${item.image ? `<img src="${item.image}" alt="${item.title || 'Zdjęcie'}">` : ''}
+                <div class="card-content">
+                    ${item.kategoria ? `<span class="badge">${item.kategoria}${item.seria ? '('+item.seria+')' : ''}</span>` : ''}
+                    <h3>${item.title || 'Bez tytułu'}</h3>
+                    <p>${item.body || ''}</p>
+                </div>
+            `;
+            card.addEventListener('click', () => openModal(item));
+            return card;
+        }
+
+        function setupModalListeners() {
+            document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+            document.getElementById('photo-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'photo-modal') closeModal();
+            });
+        }
+
+        function openModal(item) {
+            const modal = document.getElementById('photo-modal');
+            const modalBody = document.getElementById('modal-body-
