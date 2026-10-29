@@ -1,0 +1,27 @@
+backend:
+  name: github
+  repo: bartek3223/bartek3223.github.io
+  branch: main
+
+media_folder: "images" # Gdzie na GitHubie będą wgrywane zdjęcia
+public_folder: "/images"
+
+collections:
+  - name: "galeria"
+    label: "Zdjęcia i Tabor"
+    folder: "content/galeria"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - {label: "Tytuł / Oznaczenie (np. EP07-201)", name: "title", widget: "string"}
+      - {label: "Kategoria główna", name: "kategoria", widget: "select", options: ["Elektryczne", "Spalinowe", "Parowe"]}
+      - {label: "Seria / Typ", name: "seria", widget: "string", hint: "Np. EP09, EU07, SM42"}
+      - {label: "Zdjęcie lokomotywy", name: "image", widget: "image"}
+      - {label: "Data wykonania", name: "data", widget: "date"}
+      - {label: "Opis kadru", name: "body", widget: "text"}
+      - label: "Lokalizacja na mapie"
+        name: "lokalizacja"
+        widget: "object"
+        fields:
+          - {label: "Szerokość geograficzna (Lat)", name: "lat", widget: "number", value_type: "float"}
+          - {label: "Długość geograficzna (Lng)", name: "lng", widget: "number", value_type: "float"}
