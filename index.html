@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>kopuwka foto – Galeria Zdjęć</title>
-    <!-- Proste style CSS, żeby galeria wyglądała czytelnie -->
+    <title>kopuwka foto – Galeria zdjęć</title>
+    
+    <!-- Styl mapy Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -39,8 +42,8 @@
         }
         .gallery-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
             max-width: 1200px;
             margin: 0 auto;
         }
@@ -50,18 +53,23 @@
             overflow: hidden;
             border: 1px solid #333;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
         }
         .card img {
             width: 100%;
-            height: 200px;
+            height: 220px;
             object-fit: cover;
             border-bottom: 1px solid #333;
         }
         .card-content {
             padding: 15px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
         }
         .card-content h3 {
-            margin-top: 0;
+            margin: 0 0 10px 0;
             color: #ffffff;
         }
         .badge {
@@ -72,13 +80,20 @@
             font-size: 0.8rem;
             margin-bottom: 10px;
             color: #ffc107;
+            width: fit-content;
         }
-        .map-info {
-            font-size: 0.85rem;
-            color: #aaa;
-            margin-top: 10px;
-            border-top: 1px solid #2a2a2a;
-            padding-top: 8px;
+        .description {
+            margin-bottom: 15px;
+            color: #ccc;
+            font-size: 0.95rem;
+        }
+        /* Kontener na mapę pod każdym zdjęciem */
+        .map-box {
+            width: 100%;
+            height: 150px;
+            border-radius: 4px;
+            margin-top: auto;
+            border: 1px solid #444;
         }
         .loading {
             text-align: center;
@@ -98,15 +113,16 @@
 
     <main>
         <div id="gallery" class="gallery-container">
-            <div class="loading">Pobieranie zdjęć z galerii...</div>
+            <div class="loading">Ładowanie galerii i map...</div>
         </div>
     </main>
 
-    <!-- Skrypt pobierający wpisy z folderu content/galeria za pomocą GitHub API -->
+    <!-- Skrypt Leaflet do obsługi map -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <script>
         async function loadGallery() {
             const galleryEl = document.getElementById('gallery');
-            // Pobieramy listę plików z repozytorium GitHub dla folderu content/galeria
             const repo = "bartek3223/kopuwka-foto";
             const url = `https://api.github.com/repos/${repo}/contents/content/galeria`;
 
@@ -124,37 +140,53 @@
 
                 galleryEl.innerHTML = '';
 
-                for (const file of mdFiles) {
+                // Przechodzimy przez każdy wpis
+                for (let i = 0; i < mdFiles.length; i++) {
+                    const file = mdFiles[i];
                     const fileResponse = await fetch(file.download_url);
                     const text = await fileResponse.text();
                     
-                    // Parsowanie frontmatter (danych z nagłówka Markdown)
                     const frontmatter = parseFrontmatter(text);
                     if (!frontmatter) continue;
 
-                    // Tworzenie karty dla każdego wpisu
+                    const cardId = `card-${i}`;
                     const card = document.createElement('div');
                     card.className = 'card';
 
                     let imgHtml = frontmatter.image ? `<img src="${frontmatter.image}" alt="${frontmatter.title || 'Zdjęcie'}">` : '';
-                    let categoryHtml = frontmatter.kategoria ? `<span class="badge">${frontmatter.kategoria} (${frontmatter.seria || ''})</span>` : '';
+                    let categoryHtml = frontmatter.kategoria ? `<span class="badge">${frontmatter.kategoria} ${frontmatter.seria ? '('+frontmatter.seria+')' : ''}</span>` : '';
                     
-                    let mapHtml = '';
-                    if (frontmatter.lokalizacja && frontmatter.lokalizacja.lat && frontmatter.lokalizacja.lng) {
-                        mapHtml = `<div class="map-info">📍 GPS: ${frontmatter.lokalizacja.lat}, ${frontmatter.lokalizacja.lng}</div>`;
-                    }
-
                     card.innerHTML = `
                         ${imgHtml}
                         <div class="card-content">
                             ${categoryHtml}
                             <h3>${frontmatter.title || 'Bez tytułu'}</h3>
-                            <p>${frontmatter.body || ''}</p>
-                            ${mapHtml}
+                            <div class="description">${frontmatter.body || ''}</div>
+                            ${frontmatter.lokalizacja && frontmatter.lokalizacja.lat && frontmatter.lokalizacja.lng ? `<div id="map-${i}" class="map-box"></div>` : ''}
                         </div>
                     `;
 
                     galleryEl.appendChild(card);
+
+                    // Jeśli są współrzędne GPS, renderujemy mapę Leaflet
+                    if (frontmatter.lokalizacja && frontmatter.lokalizacja.lat && frontmatter.lokalizacja.lng) {
+                        const lat = Number(frontmatter.lokalizacja.lat);
+                        const lng = Number(frontmatter.lokalizacja.lng);
+                        
+                        // Małe opóźnienie, żeby DOM zdążył wyrenderować element div mapy
+                        setTimeout(() => {
+                            const map = L.map(`map-${i}`, {
+                                zoomControl: false,
+                                attributionControl: false
+                            }).setView([lat, lng], 13);
+
+                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                maxZoom: 19
+                            }).addTo(map);
+
+                            L.marker([lat, lng]).addTo(map);
+                        }, 100);
+                    }
                 }
 
             } catch (error) {
@@ -163,7 +195,6 @@
             }
         }
 
-        // Prosta funkcja do wyciągania danych YAML z pliku Markdown
         function parseFrontmatter(text) {
             const match = text.match(/^---\s*([\s\S]*?)\s*---([\s\S]*)$/);
             if (!match) return null;
@@ -172,7 +203,6 @@
             const body = match[2].trim();
             const data = { body: body };
 
-            let currentObj = data;
             let parentKey = null;
 
             yamlLines.forEach(line => {
@@ -202,6 +232,5 @@
 
         loadGallery();
     </script>
-
 </body>
 </html>
