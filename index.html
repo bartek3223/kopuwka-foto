@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>kopuwka foto – Galeria zdjęć</title>
+    <title>KOPUWKA foto – Galeria Taboru</title>
     
     <!-- Styl mapy Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,38 +14,118 @@
             background-color: #121212;
             color: #e0e0e0;
             margin: 0;
-            padding: 20px;
+            padding: 0;
         }
         header {
             text-align: center;
-            padding: 40px 0;
+            padding: 25px 20px;
+            background-color: #181818;
             border-bottom: 2px solid #333;
-            margin-bottom: 30px;
         }
         header h1 {
             margin: 0;
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             color: #ffffff;
         }
-        .admin-link {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 8px 16px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
+        header p {
+            color: #888;
+            margin: 5px 0 10px 0;
+        }
+        
+        /* Menu górne w stylu zetkolfoto */
+        nav {
+            display: flex;
+            justify-content: center;
+            background-color: #1f1f1f;
+            border-bottom: 1px solid #333;
+        }
+        nav button, nav a {
+            background: none;
+            border: none;
+            color: #ccc;
+            padding: 15px 25px;
+            font-size: 1rem;
             font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.2s;
         }
-        .admin-link:hover {
-            background-color: #0056b3;
+        nav button:hover, nav button.active, nav a:hover {
+            color: #ffc107;
+            background-color: #252525;
+            border-bottom: 3px solid #ffc107;
         }
-        .gallery-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 25px;
+        .admin-btn {
+            background-color: #007bff !important;
+            color: white !important;
+            border-radius: 4px;
+            margin: 10px;
+            padding: 8px 15px !important;
+            border-bottom: none !important;
+        }
+
+        /* Główne sekcje */
+        .section {
+            display: none;
             max-width: 1200px;
-            margin: 0 auto;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .section.active {
+            display: block;
+        }
+
+        /* Okruszki (Breadcrumbs) powrotu */
+        .breadcrumb {
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            color: #888;
+        }
+        .breadcrumb button {
+            background: none;
+            border: none;
+            color: #ffc107;
+            cursor: pointer;
+            font-weight: bold;
+            padding: 0;
+            font-size: 0.95rem;
+        }
+        .breadcrumb button:hover {
+            text-decoration: underline;
+        }
+
+        /* Siatka przycisków kategorii i serii */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .menu-box {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .menu-box:hover {
+            background-color: #252525;
+            border-color: #ffc107;
+            color: #ffc107;
+            transform: translateY(-2px);
+        }
+
+        /* Siatka galerii zdjęć */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
         }
         .card {
             background-color: #1e1e1e;
@@ -53,53 +133,48 @@
             overflow: hidden;
             border: 1px solid #333;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
         }
         .card img {
             width: 100%;
-            height: 220px;
+            height: 200px;
             object-fit: cover;
             border-bottom: 1px solid #333;
         }
         .card-content {
             padding: 15px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
         }
         .card-content h3 {
-            margin: 0 0 10px 0;
-            color: #ffffff;
+            margin: 0 0 8px 0;
+            color: #fff;
+            font-size: 1.1rem;
         }
         .badge {
             display: inline-block;
             background-color: #333;
-            padding: 4px 8px;
+            padding: 3px 8px;
             border-radius: 4px;
-            font-size: 0.8rem;
-            margin-bottom: 10px;
+            font-size: 0.75rem;
+            margin-bottom: 8px;
             color: #ffc107;
-            width: fit-content;
         }
-        .description {
-            margin-bottom: 15px;
-            color: #ccc;
-            font-size: 0.95rem;
+        .card-content p {
+            margin: 0;
+            color: #aaa;
+            font-size: 0.9rem;
         }
-        /* Kontener na mapę pod każdym zdjęciem */
-        .map-box {
+
+        /* Styl mapy */
+        #map {
             width: 100%;
-            height: 150px;
-            border-radius: 4px;
-            margin-top: auto;
+            height: 600px;
+            border-radius: 8px;
             border: 1px solid #444;
         }
         .loading {
             text-align: center;
             font-size: 1.2rem;
             color: #888;
-            grid-column: 1 / -1;
+            padding: 50px;
         }
     </style>
 </head>
@@ -108,93 +183,209 @@
     <header>
         <h1>KOPUWKA foto – Galeria Taboru</h1>
         <p>Kolej w obiektywie</p>
-        <a href="/admin/" class="admin-link">Panel Administracyjny</a>
     </header>
 
-    <main>
-        <div id="gallery" class="gallery-container">
-            <div class="loading">Ładowanie galerii i map...</div>
-        </div>
-    </main>
+    <!-- Górne menu nawigacyjne -->
+    <nav>
+        <button onclick="switchMainTab('photos')" id="nav-photos" class="active">Zdjęcia</button>
+        <button onclick="switchMainTab('map')" id="nav-map">Mapa</button>
+        <a href="/admin/" class="admin-btn">Panel Admina</a>
+    </nav>
 
-    <!-- Skrypt Leaflet do obsługi map -->
+    <!-- ZAKŁADKA: ZDJĘCIA (Kategorie -> Serie -> Zdjęcia) -->
+    <div id="tab-photos" class="section active">
+        <!-- Krok 1: Wybór kategorii głównej -->
+        <div id="view-categories">
+            <h2>Wybierz kategorię taboru:</h2>
+            <div class="menu-grid">
+                <div class="menu-box" onclick="selectCategory('Elektryczne')">⚡ Elektryczne</div>
+                <div class="menu-box" onclick="selectCategory('Spalinowe')">🚂 Spalinowe</div>
+                <div class="menu-box" onclick="selectCategory('Parowe')">💨 Parowe</div>
+            </div>
+        </div>
+
+        <!-- Krok 2: Wybór serii w danej kategorii -->
+        <div id="view-series" style="display: none;">
+            <div class="breadcrumb">
+                <button onclick="resetToCategories()">← Wróć do kategorii</button> / <span id="current-cat-name" style="color: #fff; font-weight: bold;"></span>
+            </div>
+            <h2>Wybierz serię lokomotywy:</h2>
+            <div id="series-grid" class="menu-grid"></div>
+        </div>
+
+        <!-- Krok 3: Wyświetlenie zdjęć wybranej serii -->
+        <div id="view-gallery" style="display: none;">
+            <div class="breadcrumb">
+                <button onclick="resetToSeries()">← Wróć do serii</button> / <span id="current-path" style="color: #fff; font-weight: bold;"></span>
+            </div>
+            <div id="gallery-grid" class="gallery-grid"></div>
+        </div>
+    </div>
+
+    <!-- ZAKŁADKA: MAPA -->
+    <div id="tab-map" class="section">
+        <div id="map"></div>
+    </div>
+
+    <!-- Skrypt Leaflet -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        async function loadGallery() {
-            const galleryEl = document.getElementById('gallery');
+        let allEntries = [];
+        let map = null;
+        let markersLayer = null;
+        let currentCategory = null;
+        let currentSeries = null;
+
+        // Pobieranie wpisów z GitHub API po załadowaniu strony
+        async function fetchEntries() {
             const repo = "bartek3223/kopuwka-foto";
             const url = `https://api.github.com/repos/${repo}/contents/content/galeria`;
 
             try {
                 const response = await fetch(url);
-                if (!response.ok) throw new Error("Błąd pobierania danych");
-                
+                if (!response.ok) throw new Error("Błąd pobierania");
                 const files = await response.json();
                 const mdFiles = files.filter(file => file.name.endsWith('.md'));
 
-                if (mdFiles.length === 0) {
-                    galleryEl.innerHTML = '<div class="loading">Brak wpisów w galerii. Dodaj pierwszy w panelu admina!</div>';
-                    return;
-                }
-
-                galleryEl.innerHTML = '';
-
-                // Przechodzimy przez każdy wpis
-                for (let i = 0; i < mdFiles.length; i++) {
-                    const file = mdFiles[i];
+                allEntries = [];
+                for (const file of mdFiles) {
                     const fileResponse = await fetch(file.download_url);
                     const text = await fileResponse.text();
-                    
-                    const frontmatter = parseFrontmatter(text);
-                    if (!frontmatter) continue;
-
-                    const cardId = `card-${i}`;
-                    const card = document.createElement('div');
-                    card.className = 'card';
-
-                    let imgHtml = frontmatter.image ? `<img src="${frontmatter.image}" alt="${frontmatter.title || 'Zdjęcie'}">` : '';
-                    let categoryHtml = frontmatter.kategoria ? `<span class="badge">${frontmatter.kategoria} ${frontmatter.seria ? '('+frontmatter.seria+')' : ''}</span>` : '';
-                    
-                    card.innerHTML = `
-                        ${imgHtml}
-                        <div class="card-content">
-                            ${categoryHtml}
-                            <h3>${frontmatter.title || 'Bez tytułu'}</h3>
-                            <div class="description">${frontmatter.body || ''}</div>
-                            ${frontmatter.lokalizacja && frontmatter.lokalizacja.lat && frontmatter.lokalizacja.lng ? `<div id="map-${i}" class="map-box"></div>` : ''}
-                        </div>
-                    `;
-
-                    galleryEl.appendChild(card);
-
-                    // Jeśli są współrzędne GPS, renderujemy mapę Leaflet
-                    if (frontmatter.lokalizacja && frontmatter.lokalizacja.lat && frontmatter.lokalizacja.lng) {
-                        const lat = Number(frontmatter.lokalizacja.lat);
-                        const lng = Number(frontmatter.lokalizacja.lng);
-                        
-                        // Małe opóźnienie, żeby DOM zdążył wyrenderować element div mapy
-                        setTimeout(() => {
-                            const map = L.map(`map-${i}`, {
-                                zoomControl: false,
-                                attributionControl: false
-                            }).setView([lat, lng], 13);
-
-                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                maxZoom: 19
-                            }).addTo(map);
-
-                            L.marker([lat, lng]).addTo(map);
-                        }, 100);
-                    }
+                    const data = parseFrontmatter(text);
+                    if (data) allEntries.push(data);
                 }
-
-            } catch (error) {
-                console.error(error);
-                galleryEl.innerHTML = '<div class="loading">Nie udało się załadować wpisów.</div>';
+                
+                initMapMarkers();
+            } catch (err) {
+                console.error("Błąd ładowania wpisów:", err);
             }
         }
 
+        // Przełączanie głównych zakładek (Zdjęcia / Mapa)
+        function switchMainTab(tab) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+
+            if (tab === 'photos') {
+                document.getElementById('tab-photos').classList.add('active');
+                document.getElementById('nav-photos').classList.add('active');
+            } else if (tab === 'map') {
+                document.getElementById('tab-map').classList.add('active');
+                document.getElementById('nav-map').classList.add('active');
+                // Odświeżenie mapy, żeby poprawnie się wyrenderowała
+                setTimeout(() => { if (map) map.invalidateSize(); }, 150);
+            }
+        }
+
+        // KROK 1 -> KROK 2: Wybrano kategorię
+        function selectCategory(category) {
+            currentCategory = category;
+            document.getElementById('current-cat-name').innerText = category;
+            
+            document.getElementById('view-categories').style.display = 'none';
+            document.getElementById('view-series').style.display = 'block';
+
+            // Wyciągnij unikalne serie dla tej kategorii
+            const seriesSet = new Set();
+            allEntries.forEach(item => {
+                if (item.kategoria === category && item.seria) {
+                    seriesSet.add(item.seria);
+                }
+            });
+
+            const seriesGrid = document.getElementById('series-grid');
+            seriesGrid.innerHTML = '';
+
+            if (seriesSet.size === 0) {
+                seriesGrid.innerHTML = '<div style="color: #888; grid-column: 1/-1;">Brak serii w tej kategorii. Dodaj wpis w panelu admina!</div>';
+                return;
+            }
+
+            seriesSet.forEach(seria => {
+                const box = document.createElement('div');
+                box.className = 'menu-box';
+                box.innerText = seria;
+                box.onclick = () => selectSeries(seria);
+                seriesGrid.appendChild(box);
+            });
+        }
+
+        // KROK 2 -> KROK 3: Wybrano serię
+        function selectSeries(seria) {
+            currentSeries = seria;
+            document.getElementById('current-path').innerText = `${currentCategory} / ${seria}`;
+            
+            document.getElementById('view-series').style.display = 'none';
+            document.getElementById('view-gallery').style.display = 'block';
+
+            const galleryGrid = document.getElementById('gallery-grid');
+            galleryGrid.innerHTML = '';
+
+            const filtered = allEntries.filter(item => item.kategoria === currentCategory && item.seria === seria);
+
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    ${item.image ? `<img src="${item.image}" alt="${item.title}">` : ''}
+                    <div class="card-content">
+                        <span class="badge">${item.kategoria} (${item.seria})</span>
+                        <h3>${item.title || 'Bez tytułu'}</h3>
+                        <p>${item.body || ''}</p>
+                    </div>
+                `;
+                galleryGrid.appendChild(card);
+            });
+        }
+
+        // Funkcje powrotu w nawigacji
+        function resetToCategories() {
+            currentCategory = null;
+            document.getElementById('view-series').style.display = 'none';
+            document.getElementById('view-categories').style.display = 'block';
+        }
+
+        function resetToSeries() {
+            currentSeries = null;
+            document.getElementById('view-gallery').style.display = 'none';
+            document.getElementById('view-series').style.display = 'block';
+        }
+
+        // Inicjalizacja dużej mapy zbiorczej
+        function initMap() {
+            map = L.map('map').setView([52.0, 19.0], 7); // Centrum Polski
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            markersLayer = L.layerGroup().addTo(map);
+        }
+
+        // Dodawanie pinezek na mapę ze wszystkich wpisów
+        function initMapMarkers() {
+            if (!map) initMap();
+            markersLayer.clearLayers();
+
+            allEntries.forEach(item => {
+                if (item.lokalizacja && item.lokalizacja.lat && item.lokalizacja.lng) {
+                    const lat = Number(item.lokalizacja.lat);
+                    const lng = Number(item.lokalizacja.lng);
+
+                    const marker = L.marker([lat, lng]);
+                    
+                    let popupContent = `<div style="text-align: center; max-width: 200px;">`;
+                    if (item.image) popupContent += `<img src="${item.image}" style="width:100%; height:120px; object-fit:cover; border-radius:4px; margin-bottom:5px;">`;
+                    popupContent += `<strong>${item.title || 'Lokomotywa'}</strong><br><span style="font-size:0.85rem; color:#555;">${item.kategoria} (${item.seria || ''})</span></div>`;
+
+                    marker.bindPopup(popupContent);
+                    markersLayer.addLayer(marker);
+                }
+            });
+        }
+
+        // Parser danych YAML (Frontmatter) z plików Markdown
         function parseFrontmatter(text) {
             const match = text.match(/^---\s*([\s\S]*?)\s*---([\s\S]*)$/);
             if (!match) return null;
@@ -202,7 +393,6 @@
             const yamlLines = match[1].split('\n');
             const body = match[2].trim();
             const data = { body: body };
-
             let parentKey = null;
 
             yamlLines.forEach(line => {
@@ -230,7 +420,8 @@
             return data;
         }
 
-        loadGallery();
+        // Start pobierania danych po załadowaniu strony
+        fetchEntries();
     </script>
 </body>
 </html>
