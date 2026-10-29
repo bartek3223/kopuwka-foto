@@ -1,0 +1,14 @@
+[
+  {
+    "title": "test",
+    "kategoria": "Spalinowe",
+    "seria": "Lyd1",
+    "image": "https://images.unsplash.com/photo-1515165592837-52193b2a51f3?w=800",
+    "body": "superelegancko",
+    "lokalizacja": {
+      "lat": 52.09358,
+      "lng": 17.0948
+    },
+    "featured": true
+  }
+]
