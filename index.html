@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>kopuwka foto – Galeria Kolejowa:)</title>
+    <title>KOPUWKA foto – Galeria Taboru</title>
     
     <!-- Styl mapy Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -176,7 +176,7 @@
             font-size: 0.9rem;
         }
 
-        /* Styl dużej mapy w zakładce Mapa */
+        /* Styl dużej mapy */
         #map {
             width: 100%;
             height: 600px;
@@ -184,7 +184,7 @@
             border: 1px solid #444;
         }
 
-        /* MODAL (Okno szczegółów zdjęcia) */
+        /* MODAL */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -311,13 +311,11 @@
         <div id="map"></div>
     </div>
 
-    <!-- OKNO MODALNE (Szczegóły zdjęcia po kliknięciu) -->
+    <!-- OKNO MODALNE -->
     <div id="photo-modal" class="modal-overlay" onclick="closeModalOnBackground(event)">
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal()">&times;</button>
-            <div class="modal-body" id="modal-body-content">
-                <!-- Wypełniane dynamicznie przez JS -->
-            </div>
+            <div class="modal-body" id="modal-body-content"></div>
         </div>
     </div>
 
@@ -354,7 +352,6 @@
                 }
                 
                 renderHomeTab();
-                initMapMarkers();
             } catch (err) {
                 console.error("Błąd ładowania wpisów:", err);
                 document.getElementById('home-featured-grid').innerHTML = '<div class="loading">Błąd ładowania danych z GitHuba.</div>';
@@ -392,7 +389,7 @@
             card.innerHTML = `
                 ${item.image ? `<img src="${item.image}" alt="${item.title || 'Zdjęcie'}">` : ''}
                 <div class="card-content">
-                    ${item.kategoria ? `<span class="badge">${item.kategoria} ${item.seria ? '('+item.seria+')' : ''}</span>` : ''}
+                    ${item.kategoria ? `<span class="badge">${item.kategoria}${item.seria ? '('+item.seria+')' : ''}</span>` : ''}
                     <h3>${item.title || 'Bez tytułu'}</h3>
                     <p>${item.body || ''}</p>
                 </div>
@@ -401,7 +398,6 @@
             return card;
         }
 
-        // Obsługa otwierania modala ze szczegółami
         function openModal(item) {
             const modal = document.getElementById('photo-modal');
             const modalBody = document.getElementById('modal-body-content');
@@ -417,7 +413,7 @@
                     ${item.image ? `<img src="${item.image}" alt="${item.title || 'Zdjęcie'}">` : ''}
                 </div>
                 <div class="modal-info">
-                    ${item.kategoria ? `<span class="badge">${item.kategoria} ${item.seria ? '('+item.seria+')' : ''}</span>` : ''}
+                    ${item.kategoria ? `<span class="badge">${item.kategoria}${item.seria ? '('+item.seria+')' : ''}</span>` : ''}
                     <h2>${item.title || 'Bez tytułu'}</h2>
                     <p style="color: #ccc; line-height: 1.5;">${item.body || 'Brak opisu dla tego zdjęcia.'}</p>
                     ${mapHtml}
@@ -426,11 +422,11 @@
 
             modal.style.display = 'flex';
 
-            // Inicjalizacja małej mapy w modalu
             if (hasCoords) {
                 setTimeout(() => {
                     if (modalMap) {
                         modalMap.remove();
+                        modalMap = null;
                     }
                     const lat = Number(item.lokalizacja.lat);
                     const lng = Number(item.lokalizacja.lng);
@@ -440,7 +436,7 @@
                         attribution: '&copy; OpenStreetMap contributors'
                     }).addTo(modalMap);
                     L.marker([lat, lng]).addTo(modalMap);
-                }, 100);
+                }, 150);
             }
         }
 
@@ -471,43 +467,5 @@
             } else if (tab === 'map') {
                 document.getElementById('tab-map').classList.add('active');
                 document.getElementById('nav-map').classList.add('active');
-                setTimeout(() => { 
-                    if (map) map.invalidateSize(); 
-                }, 200);
-            }
-        }
-
-        function selectCategory(category) {
-            currentCategory = category;
-            document.getElementById('current-cat-name').innerText = category;
-            
-            document.getElementById('view-categories').style.display = 'none';
-            document.getElementById('view-series').style.display = 'block';
-
-            const seriesSet = new Set();
-            allEntries.forEach(item => {
-                if (item.kategoria === category && item.seria) {
-                    seriesSet.add(item.seria);
-                }
-            });
-
-            const seriesGrid = document.getElementById('series-grid');
-            seriesGrid.innerHTML = '';
-
-            if (seriesSet.size === 0) {
-                seriesGrid.innerHTML = '<div style="color: #888; grid-column: 1/-1;">Brak serii w tej kategorii.</div>';
-                return;
-            }
-
-            seriesSet.forEach(seria => {
-                const box = document.createElement('div');
-                box.className = 'menu-box';
-                box.innerText = seria;
-                box.onclick = () => selectSeries(seria);
-                seriesGrid.appendChild(box);
-            });
-        }
-
-        function selectSeries(seria) {
-            currentSeries = seria;
-            document.getElementById('current-path').innerText = `${currentCategory} /${seria
+                
+                // In
